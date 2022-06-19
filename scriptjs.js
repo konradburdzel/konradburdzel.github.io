@@ -2,8 +2,20 @@
 
 var cards = ["ciri.png", "geralt.png", "jaskier.png", "jaskier.png", "iorweth.png", "triss.png", "geralt.png", "yen.png", "ciri.png", "triss.png", "yen.png", "iorweth.png" ];
 
-//alert(cards[4]);
-//console.log(cards);
+function randomCards(){
+    
+    for (i = 0; i <= 40; i++){
+        var a = 0;
+        var b = 0;
+        var text = "";
+        a = Math.floor(Math.random()*(cards.length - 1));
+        b = Math.floor(Math.random()*(cards.length - 1));
+        text = cards[a];
+        cards[a] = cards[b];
+        cards[b] = text;
+    }
+}
+
 //liczba rund
 var counter = 0;
 //zmienna wychwytująca koniec gry
@@ -14,69 +26,70 @@ table = new Array();
 //odsłonięta karta
 var vcard = new Array();
 //zmienna przechowująca info czy jest para
-var tf = "";
+var hide = true;
+
+start();
+randomCards();
+console.log(cards);
 
 function start(){
     text = "";
     for (i = 0; i <= cards.length - 1; i++){
-        text = text +  '<div class="card" onclick="fclick(' + i + ');" id="c' + i + '"></div>';
+        text = text +  '<div class="card" id="c' + i + '"></div>';
     }
-    //document.getElementById("board").innerHTML = text;
     $('#board').html(text);
 }
 
-function fclick(nr){
-    nclick = nclick + 1;
-    check(nr, nclick);
+//tworzy nasłuch na kliknięcie w dany kafelek
+for (i = 0; i <= cards.length - 1; i++){
+    (function (e){
+        $('#c' + e).on("click", function() {check(e);});
+    })(i);
 }
 
-function check(nr, nclick){
+function check(nr){
     
-    $("#c" + nr).css("background-image", 'url("img/' + cards[nr] + '")');
-    $("#c" + nr).css("filter", "brightness(100%)");
-    table[nclick] = cards[nr];
-    vcard[nclick] = nr;
-    document.getElementById("c" + vcard[nclick]).setAttribute("onclick", ";");
-   
-    //jeżeli odsłonęte karty ne są parą
-    if (tf == "false"){
-        for (i = nclick - 1; i >= nclick - 2; i--){
-            $('#c' + vcard[i]).css('background-image', 'url("img/karta.png")');
-            //document.getElementById("c" + vcard[i]).style.backgroundImage = 'url("img/karta.png")';
-            document.getElementById("c" + vcard[i]).setAttribute("onclick", "fclick(" + vcard[i] + ");");
-            $("#c" + vcard[i]).css("filter", "brightness(70%)");
+    if (hide == true){
+        $('#c' + nr).off();
+        nclick++;
+        //odwrócenie karty po kliknięciu
+        $('#c' + nr).addClass('cardA');
+        $("#c" + nr).css("background-image", 'url("img/' + cards[nr] + '")');
+        //wczytanie, jaką kartę odsłonięto, do pamięci podręcznej
+        table[nclick] = cards[nr];
+        vcard[nclick] = nr;
+        
+        //czy została już kliknięta druga karta? 
+        if (nclick % 2 == 0) {
+            hide = false;
+            if (table[nclick] == table[nclick - 1]) {
+                endgame = endgame - 2;
+                if (endgame == 0) setTimeout(function () {end(counter)}, 500);
+                    setTimeout(function () {correct(nclick)}, 250);
+            }
+            else {
+                setTimeout(function () {ncorrect(nclick)}, 500);
+            }
+            counter++;
+            $('.score').html("Turn counter: " + counter);
         }
-        tf = "";
-    }
-    //jeżeli karty są parą
-    else if (tf == "true"){
-        correct(nclick);
-        tf = "";
-    }
-    //czy została już kliknięta druga karta? 
-    if (nclick % 2 == 0) {
-        if (table[nclick] == table[nclick - 1]) {
-            tf = "true";
-            endgame = endgame - 2;
-            if (endgame == 0) setTimeout(end(counter), 500);
-        }
-        else tf = "false";
-
-        counter = nclick / 2;
-        //document.getElementById("score").innerHTML = "Turn counter: " + counter;
-        $('.score').html("Turn counter: " + counter);
-        //return counter;
-    }
+    } 
 }
 
 function correct(nclick){
-    for (i = nclick - 1; i >= nclick - 2; i--){
-        document.getElementById("c" + vcard[i]).style.background = "#26282E";
-        document.getElementById("c" + vcard[i]).style.border = "none";
-        document.getElementById("c" + vcard[i]).style.cursor = "default";
-        document.getElementById("c" + vcard[i]).style.filter = "brightness(100%)";
-        document.getElementById("c" + vcard[i]).setAttribute("onclick", ";");
+    for (let i = nclick; i >= nclick - 1; i--){
+        $('#c' + vcard[i]).css('opacity', '0');
     }
+    hide = true;
+}
+
+function ncorrect(nclick){
+    for (let i = nclick; i >= nclick - 1; i--){
+        $('#c' + vcard[i]).css('background-image', 'url("img/karta.png")');
+        $('#c' + vcard[i]).removeClass('cardA');
+        $('#c' + vcard[i]).on("click", function() {check(vcard[i]);});
+    }
+    hide = true;
 }
 
 function end(counter){
